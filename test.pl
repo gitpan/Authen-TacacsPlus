@@ -6,11 +6,10 @@
 # Change 1..1 below to 1..last_test_to_print .
 # (It may become useful if the test is moved to ./t subdirectory.)
 
-BEGIN { $| = 1; print "1..7\n"; }
-END {print "not ok 1\n" unless $loaded;}
+use Test;
+BEGIN { plan tests => 10 };
 use Authen::TacacsPlus;
-$loaded = 1;
-print "ok 1\n";
+ok(1);
 
 ######################### End of black magic.
 
@@ -19,15 +18,16 @@ print "ok 1\n";
 # of the test code):
 
 # You will have to change these to suit yourself:
-my $host = 'zulu.open.com.au';
-my $key = 'mysecret';
+my $host = $ENV{AUTHEN_TACACSPLUS_TEST_HOST} || 'zulu.open.com.au';
+my $key = $ENV{AUTHEN_TACACSPLUS_TEST_KEY} || 'mysecret';
 my $timeout = 15;
 my $port = 49;
-my $username = 'mikem';
-my $password = 'fred';
+my $username = $ENV{AUTHEN_TACACSPLUS_TEST_USERNAME} || 'mikem';
+my $password = $ENV{AUTHEN_TACACSPLUS_TEST_PASSWORD} || 'fred';
 # This is the CHAP encrypted password, including the challenge
 # and identifier
-my $chap_password = 'djfhafghlkdlkfjasgljksgljkdsjsdfshdfgsdfkjglgh';
+my $chap_password = $ENV{AUTHEN_TACACSPLUS_TEST_CHAP_PASSWORD} 
+    || 'djfhafghlkdlkfjasgljksgljkdsjsdfshdfgsdfkjglgh';
 
 my $tac = new Authen::TacacsPlus(Host=>$host,
 				 Key=>$key,
@@ -35,69 +35,37 @@ my $tac = new Authen::TacacsPlus(Host=>$host,
 				 Port=>$port);
 if ($tac)
 {
-    print "ok 2\n";
+    ok(1);
 }
 else
 {
-    print "Could not connect to TACACSPLUS Host $self->{Host}: " . Authen::TacacsPlus::errmsg() . "\n";
-    print "not ok 2\n" ;
+    foreach (2..10)
+    {
+	skip('Unable to complete tests because the test Tacacs server could not be contacted');
+    }
+    exit;
 }
 
 
 # test default type (ASCII), backwards compatible
-if ($tac->authen($username, $password))
-{
-    print "ok 3\n";
-}
-else
-{
-    my $reason = Authen::TacacsPlus::errmsg();
-    print "authen failed: $reason\n";
-    print "not ok 3\n" 
-}
-$tac->close();
+ok($tac->authen($username, $password));
+ok($tac->close() == 0);
 
 my $tac = new Authen::TacacsPlus(Host=>$host,
 				 Key=>$key,
 				 Timeout=>$timeout,
 				 Port=>$port);
-if ($tac)
-{
-    print "ok 4\n";
-}
-else
-{
-    print "Could not connect to TACACSPLUS Host $self->{Host}: " . Authen::TacacsPlus::errmsg() . "\n";
-    print "not ok 4\n" ;
-}
-
+ok($tac);
 
 # test default PAP type
-if ($tac->authen($username, $password, &Authen::TacacsPlus::TAC_PLUS_AUTHEN_TYPE_PAP))
-{
-    print "ok 5\n";
-}
-else
-{
-    my $reason = Authen::TacacsPlus::errmsg();
-    print "authen failed: $reason\n";
-    print "not ok 5\n" 
-}
-$tac->close();
+ok($tac->authen($username, $password, &Authen::TacacsPlus::TAC_PLUS_AUTHEN_TYPE_PAP));
+ok($tac->close() == 0);
 
 $tac = new Authen::TacacsPlus(Host=>$host,
 				 Key=>$key,
 				 Timeout=>$timeout,
 				 Port=>$port);
-if ($tac)
-{
-    print "ok 6\n";
-}
-else
-{
-    print "Could not connect to TACACSPLUS Host $self->{Host}: " . Authen::TacacsPlus::errmsg() . "\n";
-    print "not ok 6\n" ;
-}
+ok($tac);
 
 # test CHAP auth type
 require Digest::MD5;
@@ -108,15 +76,6 @@ $chap_challenge = '1234567890123456';
 $chap_response = Digest::MD5::md5($chap_id . $password . $chap_challenge);
 $chap_string = $chap_id . $chap_challenge . $chap_response;
 
-if ($tac->authen($username, $chap_string, &Authen::TacacsPlus::TAC_PLUS_AUTHEN_TYPE_CHAP))
-{
-    print "ok 7\n";
-}
-else
-{
-    my $reason = Authen::TacacsPlus::errmsg();
-    print "authen failed: $reason\n";
-    print "not ok 7\n" 
-}
-$tac->close();
+ok($tac->authen($username, $chap_string, &Authen::TacacsPlus::TAC_PLUS_AUTHEN_TYPE_CHAP));
+ok($tac->close() == 0);
 

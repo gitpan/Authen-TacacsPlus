@@ -25,4 +25,13 @@ Revision history for Perl extension Authen::TacacsPlus.
      - Fixed a typedef in md5.h that breaks md5 on 64 bit machines. Patch
      provided by Ernst Oudhof.
      - Removed bogus broken constant TACACS_CLIENT.
-     - Fixed a number of compiler warnings, but still does not compile on Windows.
+     - Fixed a number of compiler warnings, but still does not compile on
+     Windows.
+
+0.18 Sat Mar 15 2008, Mike McCauley
+     - Disabled default setting of -symbolic in Makefile.PL
+     on Solaris since it seems to be
+     no longer required on most platforms.
+     - Improved errmsg() so it works as advertised
+     - test suite now uses Test.
+     - test suite now skips if there is no Tacacs server to test against

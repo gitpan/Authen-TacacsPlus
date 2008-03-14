@@ -135,10 +135,10 @@ void
 deinit_tac_session()
 
 
-SV *                                                                
+char *                                                               
 errmsg()                                                     
-    CODE:                                                           
-        {                                                           
-                                                                    
-            RETVAL = sv_2mortal(newSVpv(tac_err,strlen(tac_err)));     
-        }                                                           
+    CODE:  
+     RETVAL = tac_err;     
+    OUTPUT:
+     RETVAL
+
