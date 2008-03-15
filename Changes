@@ -35,3 +35,6 @@ Revision history for Perl extension Authen::TacacsPlus.
      - Improved errmsg() so it works as advertised
      - test suite now uses Test.
      - test suite now skips if there is no Tacacs server to test against
+
+0.19 Sun Mar 16 2008, Mike McCauley
+     - Fixed 'make test' failure in taclibplus due to missing pure_all target

@@ -31,7 +31,11 @@ static:	libtacplus$(LIB_EXT)
                                                  
 libtacplus$(LIB_EXT):	$(O_FILES)                  
 	$(AR) cr libtacplus$(LIB_EXT) $(O_FILES)  
-	$(RANLIB) libtacplus$(LIB_EXT)            
+	$(RANLIB) libtacplus$(LIB_EXT)  
+
+pure_all : 
+	$(NOECHO) $(NOOP)
+
                                                  
  ';                                              
  }                                               
