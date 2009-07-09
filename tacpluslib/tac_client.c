@@ -117,7 +117,7 @@ int make_auth(char* username, int user_len,
 	case TAC_PLUS_AUTHEN_STATUS_PASS:
 	    return 1;
 	case TAC_PLUS_AUTHEN_STATUS_FAIL: 
-	    tac_err="Authentification failed";
+	    tac_err="Authentication failed";
 	    return 0;                 
 	default :
 	    tac_err="Protocol error";
@@ -160,6 +160,14 @@ exit(1);
 
 int init_tac_session(char* host_name, char* port_name, char* key, int timeout)
 {
+
+int flags;
+int res;
+int optval;
+socklen_t len;
+fd_set wset;
+struct timeval tv;
+
 gethostname(ourhost,127);
 ourhost_len=strlen(ourhost);
 ourtty_len=strlen(ourtty);
@@ -194,8 +202,64 @@ if (*port_name>='0' && *port_name<='9') {
     }
 }
 if((tac_fd = socket (AF_INET, SOCK_STREAM, 0))<0) return -1;
-if (connect (tac_fd, (struct sockaddr *) &tac_port, sizeof tac_port) < 0)
-    return -1;
+
+// get flags
+flags = fcntl(tac_fd, F_GETFL, 0);
+if( flags < 0 ) {
+	//fprintf( stderr, "fcntl: %s\n", strerror(errno) );
+	tac_err = "socket error";
+	return -1;
+}
+
+// set socket to nonblock
+res = fcntl( tac_fd, F_SETFL, flags | O_NONBLOCK );
+if( res < 0 ) {
+	//fprintf( stderr, "fcntl: %s\n", strerror(errno) );
+	tac_err = "socket error";
+	return -1;
+}
+
+// connect
+res = connect (tac_fd, (struct sockaddr *) &tac_port, sizeof tac_port);
+
+// connection not established, but in progress
+if( res < 0 && (errno != EINPROGRESS) ) {
+	tac_err = "connection failed";
+	return -1;
+}
+
+// wait for connection or timeout
+if( res != 0 ) {
+	FD_ZERO(&wset);
+	FD_SET(tac_fd, &wset);
+	tv.tv_sec  = timeout;
+	tv.tv_usec = 0;
+
+	res = select( tac_fd+1, NULL, &wset, NULL, &tv );
+	if( res < 0 ) {
+		tac_err = "select failed";
+		return -1;
+	}
+	else if( res == 0 ) {
+		tac_err = "timeout";
+		return -1;
+	}
+	if( res > 0 ) {
+		// socket is ready for writing. Check if connection was
+		// established successfully
+		len = sizeof(optval);
+		if( getsockopt( tac_fd, SOL_SOCKET, SO_ERROR, (void *)&optval, &len ) > 0 ) {
+			tac_err = "getsockopt failed";
+			return -1;
+		}
+		if( optval != 0 ) {
+			tac_err = "connection failed";
+			return -1;
+		}
+		// optval == 0 --> no error, connection established
+	}
+}
+	
 return tac_fd;
 }
 

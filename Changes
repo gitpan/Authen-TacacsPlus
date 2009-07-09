@@ -38,3 +38,9 @@ Revision history for Perl extension Authen::TacacsPlus.
 
 0.19 Sun Mar 16 2008, Mike McCauley
      - Fixed 'make test' failure in taclibplus due to missing pure_all target
+
+0.20 Fri July 10, 2009 Mike McCauley
+     - Fixed incorect spelling of 'Authentication' in tac_client.c
+     - implements a 
+     timeout for the connect() operation. It uses the timeout value which is
+     passed to the init_tac_session() function. Contributed by Robert Leibl
