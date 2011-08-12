@@ -17,14 +17,22 @@ require DynaLoader;
 @EXPORT_OK = qw(
 	TACPLUS_CLIENT
 );
-$VERSION = '0.20';
+$VERSION = '0.21';
 
 sub new
 {
 my $class = shift;
-my %h = @_;
+my %h;
 my $self = {};
 bless $self, $class;
+$self->{'servers'} = [];
+if (ref @_[0] eq 'ARRAY') {
+    %h = @{ @_[0] };
+    shift @_;
+    push @{ $self->{'servers'} }, @_;
+} else {
+    %h = @_;
+}
 my $res=-1;
 $self->{'timeout'} = $h{'Timeout'} ? $h{'Timeout'} : 15;
 $self->{'port'} = $h{'Port'} ? $h{'Port'} : 'tacacs';
@@ -32,6 +40,19 @@ $self->{'host'} = $h{'Host'};
 $self->{'key'} = $h{'Key'};
 $res=init_tac_session($self->{'host'},$self->{'port'},
 	$self->{'key'},$self->{'timeout'});
+if ($res<0) {
+    my $s = $self->{'servers'};
+    while ($s->[0]) {
+        my %h = @{ $s->[0] };
+        shift @{ $s };
+        $res=init_tac_session( $h{'Host'},
+                               $h{'Port'} ? $h{'Port'} : 'tacacs',
+                               $h{'Key'},
+                               $h{'Timeout'} ? $h{'Timeout'} : 15
+                              );
+        last if ($res >= 0);
+    }
+}
 undef $self if ($res < 0);
 $self;
 }
@@ -40,11 +61,27 @@ $self;
 # TAC_PLUS_AUTHEN_TYPE_ASCII
 sub authen
 {
-    my $class = shift;
+    my $self = shift;
     my $username = shift;
     my $password = shift;
     my $authen_type = shift || &Authen::TacacsPlus::TAC_PLUS_AUTHEN_TYPE_ASCII;
     my $res=make_auth($username,$password,$authen_type);
+    unless ($res || errmsg() =~ /Authentication failed/) {
+        my $s = $self->{'servers'};
+        while ($s->[0]) {
+            my %h = @{ $s->[0] };
+            shift @{ $s };
+            my $ret=init_tac_session( $h{'Host'},
+                                      $h{'Port'} ? $h{'Port'} : 'tacacs',
+                                      $h{'Key'},
+                                      $h{'Timeout'} ? $h{'Timeout'} : 15
+                                    );
+            next if ($ret < 0);
+            $res=make_auth($username,$password,$authen_type);
+            last if $res;
+        }
+
+    }
     $res;
 }
 
@@ -99,6 +136,14 @@ Authen::TacacsPlus - Perl extension for authentication using tacacs+ server
 			[Port=>'tacacs'],
 			[Timeout=>15]);
 
+  or
+
+  $tac = new Authen::TacacsPlus(
+     [ Host=>$server1, Key=>$key1, [Port=>'tacacs'], [Timeout=>15] ],
+     [ Host=>$server2, Key=>$key2, [Port=>'tacacs'], [Timeout=>15] ],
+     [ Host=>$server3, Key=>$key3, [Port=>'tacacs'], [Timeout=>15] ],
+     ...  );
+
   $tac->authen($username,$passwords);
 
   Authen::TacacsPlus::errmsg(); 
@@ -118,6 +163,9 @@ Authen::TacacsPlus allows you to authenticate using tacacs+ server.
 Opens new session with tacacs+ server on host $server, encrypted
 with key $key. Undefined object is returned if something wrong
 (check errmsg()).
+
+With a list of servers the order is relevant. It checks the availability
+of the Tacacs+ service using the order you defined.
 
 
   Authen::TacacsPlus::errmsg();
@@ -147,7 +195,10 @@ the "chap" or "global" password on the Tacacs+ server. With CHAP,
 the password if formed by the concatenation of
   chap id + chap challenge + chap response
 
-Ther is example code in test.pl
+There is example code in test.pl
+
+If you use a list of servers you can continue using $tac->authen if
+one of them goes down or become unreachable.
 
 
   $tac->close();

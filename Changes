@@ -44,3 +44,8 @@ Revision history for Perl extension Authen::TacacsPlus.
      - implements a 
      timeout for the connect() operation. It uses the timeout value which is
      passed to the init_tac_session() function. Contributed by Robert Leibl
+
+0.21 Sat Aug 13, 2011 Mike McCauley
+     - Changes to TacacsPlus.pm to permit multiple servers to be specified in
+     new(). Patches provided by Paulo A Ferreira.
+     
