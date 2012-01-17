@@ -17,7 +17,7 @@ require DynaLoader;
 @EXPORT_OK = qw(
 	TACPLUS_CLIENT
 );
-$VERSION = '0.21';
+$VERSION = '0.22';
 
 sub new
 {
@@ -26,8 +26,8 @@ my %h;
 my $self = {};
 bless $self, $class;
 $self->{'servers'} = [];
-if (ref @_[0] eq 'ARRAY') {
-    %h = @{ @_[0] };
+if (ref $_[0] eq 'ARRAY') {
+    %h = @{ $_[0] };
     shift @_;
     push @{ $self->{'servers'} }, @_;
 } else {

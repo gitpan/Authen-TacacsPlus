@@ -49,3 +49,7 @@ Revision history for Perl extension Authen::TacacsPlus.
      - Changes to TacacsPlus.pm to permit multiple servers to be specified in
      new(). Patches provided by Paulo A Ferreira.
      
+0.22 Wed Jan 18, 2012 Mike McCauley
+     - Fixed warning under perl 5.14
+
+     
