@@ -102,6 +102,7 @@ int make_auth(char* username, int user_len,
     md5_xor(buf, buf+TAC_PLUS_HDR_SIZE, tac_key);
     send_data(buf,buf_len,tac_fd);
     free(buf);
+
     while ((data_len=read_reply(&data))!=-1){
 
 	ar=data;
@@ -288,38 +289,56 @@ for(try=0;try<tac_maxtry;try++){
 
 int read_data(void* buf, int buf_len, int fd)                 
 {                                                             
-fd_set fds;                                                   
-int rr;                                                       
-int try;                                                      
-struct timeval tv;                                            
-                                                              
-FD_ZERO(&fds);                                                
-FD_SET(fd,&fds);                                              
-tv.tv_sec = tac_timeout;                                      
-tv.tv_usec = 0;                                               
-for(try=0;try<tac_maxtry;try++){                              
-        rr=select(fd+1,&fds,NULL,NULL,&tv);                   
-        if (FD_ISSET(fd,&fds)) {                              
-                if (buf_len!=read(fd,buf,buf_len)) continue; 
-                return 0;                                     
+    fd_set fds;                                                   
+    int rr;                                                       
+    int try;   
+    int have_len = 0;
+    struct timeval tv;                                            
+    
+    FD_ZERO(&fds);                                                
+    FD_SET(fd,&fds);                                              
+    tv.tv_sec = tac_timeout;                                      
+    tv.tv_usec = 0;
+    try = 0;
+    while (have_len < buf_len && try++ < tac_maxtry)
+    {                              
+        rr = select(fd+1, &fds, NULL, NULL, &tv);                   
+        if (FD_ISSET(fd, &fds)) 
+	{                              
+	    ssize_t read_len = read(fd,buf+have_len,buf_len-have_len);
+	    if (read_len == 0)
+	    {
+		// Unexpected end-of file. Server disconnected us?
+		return -1;
+	    }
+	    else if (read_len == -1)
+	    {
+		myerror("read error");
+		return -1;
+	    }
+	    have_len += read_len;
+	    if (buf_len != have_len) 
+		continue; 
+
+	    return 0;                                     
         }                                                     
-        myerror("read error");                               
-        return -1;                                            
-}                                                             
- return 1;                                                              
+    }                                                             
+    myerror("too many retries");                               
+    return -1;                                                              
 }                                                             
 
 int read_reply(void** data)
 {
-int data_len;
-struct tac_plus_pak_hdr hdr;
-if (read_data(&hdr,TAC_PLUS_HDR_SIZE,tac_fd)==-1) return -1;
-data_len=ntohl(hdr.datalength);
-tac_sequence=hdr.seq_no+1;
-*data=malloc(data_len);
-if (read_data(*data,data_len,tac_fd)==-1) return -1;
-md5_xor(&hdr, *data, tac_key); 
-return data_len;
+    int data_len;
+    struct tac_plus_pak_hdr hdr;
+    
+    if (read_data(&hdr,TAC_PLUS_HDR_SIZE,tac_fd)==-1) return -1;
+    data_len=ntohl(hdr.datalength);
+    tac_sequence=hdr.seq_no+1;
+    *data=malloc(data_len);
+    if (read_data(*data,data_len,tac_fd)==-1) return -1;
+    md5_xor(&hdr, *data, tac_key); 
+    return data_len;
 }
 
 void deinit_tac_session()

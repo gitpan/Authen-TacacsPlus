@@ -52,4 +52,11 @@ Revision history for Perl extension Authen::TacacsPlus.
 0.22 Wed Jan 18, 2012 Mike McCauley
      - Fixed warning under perl 5.14
 
+0.23 Wed Aug 23, 2012 Mike McCauley
+     - Fixed problems in low level read_data() function triggered when an
+     incorrect key is used with some Tacacs+ servers, resulting in a 0-length
+     read(), causing a seg
+     fault on some platforms, and a very slow exit on others. This problem
+     appears to have been in tac_client ever since I inherited this library.
+
      
