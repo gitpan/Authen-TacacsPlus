@@ -50,7 +50,7 @@ Revision history for Perl extension Authen::TacacsPlus.
      new(). Patches provided by Paulo A Ferreira.
      
 0.22 Wed Jan 18, 2012 Mike McCauley
-     - Fixed warning under perl 5.14
+     - Fixed warning under perl 5.14g
 
 0.23 Wed Aug 23, 2012 Mike McCauley
      - Fixed problems in low level read_data() function triggered when an
@@ -59,4 +59,5 @@ Revision history for Perl extension Authen::TacacsPlus.
      fault on some platforms, and a very slow exit on others. This problem
      appears to have been in tac_client ever since I inherited this library.
 
-     
+0.24 Fri Mar 22, 2013 Mike McCauley
+     - Updated author and distribution location details to airspayce.com

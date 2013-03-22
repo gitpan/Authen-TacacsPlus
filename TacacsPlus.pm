@@ -17,7 +17,7 @@ require DynaLoader;
 @EXPORT_OK = qw(
 	TACPLUS_CLIENT
 );
-$VERSION = '0.23';
+$VERSION = '0.24';
 
 sub new
 {
@@ -228,7 +228,7 @@ Closes session with tacacs+ server.
 
 Mike Shoyher, msh@corbina.net, msh@apache.lexa.ru
 
-Mike McCauley, mikem@open.com.au
+Mike McCauley, mikem@airspayce.com
 
 =head1 BUGS
 
